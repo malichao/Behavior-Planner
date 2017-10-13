@@ -12,6 +12,11 @@
 
 using namespace std;
 
+struct RoadStringImage {
+  vector<vector<string>> road;
+  vector<pair<int, string>> distance;
+};
+
 class Road {
  public:
   int update_width = 70;
@@ -50,7 +55,7 @@ class Road {
 
   void advance();
 
-  vector<vector<string>> display(int timestep);
+  RoadStringImage display(int timestep);
 
   void add_ego(int lane_num, int s, vector<int> config_data);
 

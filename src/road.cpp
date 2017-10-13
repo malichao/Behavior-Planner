@@ -65,7 +65,7 @@ void Road::advance() {
   }
 }
 
-vector<vector<string>> Road::display(int timestep) {
+RoadStringImage Road::display(int timestep) {
   Vehicle ego = this->vehicles.find(this->ego_key)->second;
   int s = ego.s;
   string state = ego.state;
@@ -75,6 +75,7 @@ vector<vector<string>> Road::display(int timestep) {
   int s_max = s_min + this->update_width;
 
   vector<vector<string>> road;
+  vector<pair<int, string>> distance;
 
   for (int i = 0; i < this->update_width; i++) {
     vector<string> road_lane;
@@ -112,7 +113,7 @@ vector<vector<string>> Road::display(int timestep) {
   oss << "+Meters ======================+ step: " << timestep << endl;
   int i = s_min;
   for (int lj = 0; lj < road.size(); lj++) {
-    if (i % 20 == 0) {
+    if (i % 10 == 0) {
       stringstream buffer;
       stringstream dis;
       dis << i;
@@ -120,7 +121,9 @@ vector<vector<string>> Road::display(int timestep) {
         buffer << "0";
       }
 
-      oss << buffer.str() << dis.str() << " - ";
+      auto dist = buffer.str() + dis.str() + " - ";
+      oss << dist;
+      distance.push_back({lj, dist});
     } else {
       oss << "      ";
     }
@@ -132,7 +135,7 @@ vector<vector<string>> Road::display(int timestep) {
     oss << "\n";
   }
   cout << oss.str();
-  return road;
+  return {road, distance};
 }
 
 void Road::add_ego(int lane_num, int s, vector<int> config_data) {

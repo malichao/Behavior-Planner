@@ -10,7 +10,7 @@
 #include <highgui.h>
 #include <BehaviorPlanner/gif.h>
 
-void DrawImage(vector<vector<string>>& str_img, int step) {
+void DrawImage(RoadStringImage& str_img, int step) {
   // OpenCV coordinate system:
   // 0 ---- x
   // |
@@ -25,28 +25,53 @@ void DrawImage(vector<vector<string>>& str_img, int step) {
 
   cv::Mat image = cv::Mat::zeros(640, 320, CV_8UC1);
   image.setTo(cv::Scalar(255));
+
+  // Draw Headline
+  string headline = "Meters / Step: " + to_string(step);
+  cv::Point pos(0, 10);
+  cv::putText(image, headline, pos,     // Coordinates
+              cv::FONT_HERSHEY_DUPLEX,  // Font
+              0.5,                      // Scale. 2.0 = 2x bigger
+              cv::Scalar(0),            // Color
+              1);                       // Thickness
+
   static double lane_ratio = 60;
   static double col_ratio = 15;
   // Draw Lane lines
-  cv::Point offset(50, 10);
+  cv::Point offset(60, 25);
   for (auto lane : {0, 1, 2, 3, 4}) {
-    cv::Point start(lane * lane_ratio, 20);
+    cv::Point start(lane * lane_ratio, 0);
     cv::Point end(lane * lane_ratio, 600);
     cv::line(image, start + offset, end + offset, cv::Scalar(0));
   }
 
   // Draw car IDs
-  for (int col = 0; col < str_img.size(); col++) {
-    for (int lane = 0; lane < str_img[col].size(); lane++) {
+  auto& road = str_img.road;
+  for (int col = 0; col < road.size(); col++) {
+    for (int lane = 0; lane < road[col].size(); lane++) {
       cv::Point pos(lane * lane_ratio + lane_ratio / 5, col * col_ratio + 16);
-      cv::putText(image, str_img[col][lane], pos + offset,  // Coordinates
-                  cv::FONT_HERSHEY_DUPLEX,                  // Font
+      cv::putText(image, road[col][lane], pos + offset,  // Coordinates
+                  cv::FONT_HERSHEY_DUPLEX,               // Font
                   0.5,            // Scale. 2.0 = 2x bigger
                   cv::Scalar(0),  // Color
                   1);             // Thickness
     }
   }
-  cv::imwrite("images/step_" + to_string(step) + ".jpg", image);
+
+  // Draw distance
+  auto& dist = str_img.distance;
+  for (auto& s : dist) {
+    cv::Point pos(5, s.first * col_ratio + 16);
+    cv::putText(image, s.second, pos,     // Coordinates
+                cv::FONT_HERSHEY_DUPLEX,  // Font
+                0.5,                      // Scale. 2.0 = 2x bigger
+                cv::Scalar(0),            // Color
+                1);                       // Thickness
+  }
+
+  char buffer[10];
+  sprintf(buffer, "%03d", step);
+  cv::imwrite("images/step_" + string(buffer) + ".jpg", image);
 }
 
 using namespace std;
