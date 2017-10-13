@@ -61,7 +61,7 @@ void DrawImage(RoadStringImage& str_img, int step) {
   // Draw distance
   auto& dist = str_img.distance;
   for (auto& s : dist) {
-    cv::Point pos(5, s.first * col_ratio + 16);
+    cv::Point pos(5, s.first * col_ratio + 16 + offset.y);
     cv::putText(image, s.second, pos,     // Coordinates
                 cv::FONT_HERSHEY_DUPLEX,  // Font
                 0.5,                      // Scale. 2.0 = 2x bigger
