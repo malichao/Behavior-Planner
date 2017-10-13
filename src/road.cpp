@@ -65,7 +65,7 @@ void Road::advance() {
   }
 }
 
-void Road::display(int timestep) {
+string Road::display(int timestep) {
   Vehicle ego = this->vehicles.find(this->ego_key)->second;
   int s = ego.s;
   string state = ego.state;
@@ -132,7 +132,7 @@ void Road::display(int timestep) {
     oss << "\n";
   }
 
-  cout << oss.str();
+  return oss.str();
 }
 
 void Road::add_ego(int lane_num, int s, vector<int> config_data) {

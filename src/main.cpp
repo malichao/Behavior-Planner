@@ -4,6 +4,20 @@
 #include <fstream>
 #include <math.h>
 #include <vector>
+#include <opencv2/core/core.hpp>
+#include <opencv/cv.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <highgui.h>
+
+void SaveImage(const string &str_img) {
+  cv::Mat image = cv::Mat::zeros(640, 320, CV_8UC1);
+  cv::putText(image, str_img, cv::Point(5, 20),  // Coordinates
+              cv::FONT_HERSHEY_DUPLEX,           // Font
+              0.3,                               // Scale. 2.0 = 2x bigger
+              cv::Scalar(255, 255, 255),         // Color
+              1);                                // Thickness
+  cv::imwrite("test.jpg", image);
+}
 
 using namespace std;
 
@@ -53,7 +67,8 @@ int main() {
       break;
     }
     road.advance();
-    road.display(timestep);
+    auto str_img = road.display(timestep);
+    SaveImage(str_img);
     // time.sleep(float(1.0) / FRAMES_PER_SECOND);
   }
   Vehicle ego = road.get_ego();
@@ -66,6 +81,5 @@ int main() {
     cout << "You missed the goal. You are in lane " << ego.lane
          << " instead of " << GOAL[1] << "." << endl;
   }
-
   return 0;
 }

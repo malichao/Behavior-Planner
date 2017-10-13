@@ -9,6 +9,8 @@ add_definitions(-std=c++11)
 set(CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS, "${CXX_FLAGS}")
 
+find_package( OpenCV REQUIRED )
+
 include_directories(
     include/
     ${GTEST_INCLUDE_DIRS}
@@ -22,4 +24,8 @@ set(sources
 
 add_executable(BehaviorPlanner
     ${sources}
+)
+
+target_link_libraries(BehaviorPlanner
+    ${OpenCV_LIBS}
 )
