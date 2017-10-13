@@ -11,11 +11,18 @@
 
 void SaveImage(const string &str_img) {
   cv::Mat image = cv::Mat::zeros(640, 320, CV_8UC1);
-  cv::putText(image, str_img, cv::Point(5, 20),  // Coordinates
-              cv::FONT_HERSHEY_DUPLEX,           // Font
-              0.3,                               // Scale. 2.0 = 2x bigger
-              cv::Scalar(255, 255, 255),         // Color
-              1);                                // Thickness
+  cout << "writing\n" << str_img;
+  stringstream ss(str_img);
+  string line;
+  cv::Point line_pos(5, 20);
+  while (getline(ss, line)) {
+    cv::putText(image, line, line_pos,      // Coordinates
+                cv::FONT_HERSHEY_DUPLEX,    // Font
+                0.3,                        // Scale. 2.0 = 2x bigger
+                cv::Scalar(255, 255, 255),  // Color
+                1);                         // Thickness
+    line_pos.y += 10;
+  }
   cv::imwrite("test.jpg", image);
 }
 
