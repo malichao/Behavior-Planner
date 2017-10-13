@@ -50,7 +50,7 @@ class Road {
 
   void advance();
 
-  string display(int timestep);
+  vector<vector<string>> display(int timestep);
 
   void add_ego(int lane_num, int s, vector<int> config_data);
 

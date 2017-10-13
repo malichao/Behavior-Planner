@@ -9,20 +9,46 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <highgui.h>
 
-void SaveImage(const string &str_img) {
+void SaveImage(vector<vector<string>>& str_img) {
+  // OpenCV coordinate system:
+  // 0 ---- x
+  // |
+  // |
+  // y
+
+  // Road coordinate system:
+  // 0 ----lane(0,1,2,3...)
+  // |
+  // |
+  // distance
+
   cv::Mat image = cv::Mat::zeros(640, 320, CV_8UC1);
   image.setTo(cv::Scalar(255));
-  cout << "writing\n" << str_img;
-  stringstream ss(str_img);
-  string line;
-  cv::Point line_pos(5, 20);
-  while (getline(ss, line)) {
-    cv::putText(image, line, line_pos,    // Coordinates
-                cv::FONT_HERSHEY_DUPLEX,  // Font
-                0.3,                      // Scale. 2.0 = 2x bigger
-                cv::Scalar(0),            // Color
-                1);                       // Thickness
-    line_pos.y += 10;
+  static double lane_ratio = 60;
+  static double col_ratio = 15;
+  // Draw Lane lines
+  cv::Point offset(50, 10);
+  for (auto lane : {0, 1, 2, 3, 4}) {
+    cv::Point start(lane * lane_ratio, 20);
+    cv::Point end(lane * lane_ratio, 600);
+    cv::line(image, start + offset, end + offset, cv::Scalar(0));
+  }
+
+  // Draw car IDs
+  for (int col = 0; col < str_img.size(); col++) {
+    for (int lane = 0; lane < str_img[col].size(); lane++) {
+      if (str_img[col][lane].find('0') != string::npos) {
+        printf("Drawing %s, [%d,%d]-> [%.1f,%.1f]\n",
+               str_img[col][lane].c_str(), lane, col, lane * lane_ratio,
+               col * col_ratio);
+      }
+      cv::Point pos(lane * lane_ratio + lane_ratio / 5, col * col_ratio + 16);
+      cv::putText(image, str_img[col][lane], pos + offset,  // Coordinates
+                  cv::FONT_HERSHEY_DUPLEX,                  // Font
+                  0.5,            // Scale. 2.0 = 2x bigger
+                  cv::Scalar(0),  // Color
+                  1);             // Thickness
+    }
   }
   cv::imwrite("test.jpg", image);
 }
