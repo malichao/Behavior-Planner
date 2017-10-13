@@ -8,8 +8,9 @@
 #include <opencv/cv.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <highgui.h>
+#include <BehaviorPlanner/gif.h>
 
-void SaveImage(vector<vector<string>>& str_img) {
+void DrawImage(vector<vector<string>>& str_img, int step) {
   // OpenCV coordinate system:
   // 0 ---- x
   // |
@@ -37,11 +38,6 @@ void SaveImage(vector<vector<string>>& str_img) {
   // Draw car IDs
   for (int col = 0; col < str_img.size(); col++) {
     for (int lane = 0; lane < str_img[col].size(); lane++) {
-      if (str_img[col][lane].find('0') != string::npos) {
-        printf("Drawing %s, [%d,%d]-> [%.1f,%.1f]\n",
-               str_img[col][lane].c_str(), lane, col, lane * lane_ratio,
-               col * col_ratio);
-      }
       cv::Point pos(lane * lane_ratio + lane_ratio / 5, col * col_ratio + 16);
       cv::putText(image, str_img[col][lane], pos + offset,  // Coordinates
                   cv::FONT_HERSHEY_DUPLEX,                  // Font
@@ -50,7 +46,7 @@ void SaveImage(vector<vector<string>>& str_img) {
                   1);             // Thickness
     }
   }
-  cv::imwrite("test.jpg", image);
+  cv::imwrite("images/step_" + to_string(step) + ".jpg", image);
 }
 
 using namespace std;
@@ -95,6 +91,9 @@ int main() {
   road.add_ego(2, 0, ego_config);
   int timestep = 0;
 
+  // Create a folder to save test images
+  system("mkdir images");
+
   while (road.get_ego().s <= GOAL[0]) {
     timestep++;
     if (timestep > 35) {
@@ -102,7 +101,7 @@ int main() {
     }
     road.advance();
     auto str_img = road.display(timestep);
-    SaveImage(str_img);
+    DrawImage(str_img, timestep);
     // time.sleep(float(1.0) / FRAMES_PER_SECOND);
   }
   Vehicle ego = road.get_ego();
