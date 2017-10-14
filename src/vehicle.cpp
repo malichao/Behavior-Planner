@@ -109,7 +109,11 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
     for (auto& pose : traj) {
       printf("[l %d s %d v %d] ", pose.lane, pose.s, pose.v);
     }
-    cost[i++] = 1.0 / traj.back().s;
+    if (collider.collision) {
+      cost[i++] = 1.0 / collider.s;
+    } else {
+      cost[i++] = 1.0 / traj.back().s;
+    }
     printf("\n");
   }
   double min_cost = CostMax;
@@ -207,11 +211,13 @@ Vehicle::collider Vehicle::will_collide_with(Vehicle::Trajectory other,
       // printf("hit @ %d ", other[t].s);
       collider_temp.collision = true;
       collider_temp.time = t;
+      collider_temp.s = other[t].s;
       return collider_temp;
     } else if (collides_with(other[t], t, t + 1)) {
       // printf("cross @ %d ", other[t].s);
       collider_temp.collision = true;
       collider_temp.time = t;
+      collider_temp.s = other[t].s;
       return collider_temp;
     }
   }

@@ -17,6 +17,7 @@ class Vehicle {
   struct collider {
     bool collision;  // is there a collision?
     int time;        // time collision happens
+    int s;           // distance collision happens
   };
 
   struct Pose {
