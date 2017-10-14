@@ -91,7 +91,21 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
       state = "KL";
     }
     auto traj = GenerateTrajectory(predictions, state, pose);
-
+    auto cars_in_lane = FilterPrediction(predictions, this->lane);
+    Vehicle::collider collider{false, 999};
+    for (auto& car : cars_in_lane) {
+      //      printf("Checking :");
+      //      for (auto& pose : car) {
+      //        printf("[l %d s %d] ", pose.lane, pose.s);
+      //      }
+      //      printf("\n");
+      auto temp = will_collide_with(car, 10);
+      collider.collision |= temp.collision;
+      collider.time = std::min(collider.time, temp.time);
+    }
+    //    if (collider.collision) {
+    //      printf("*@ %d ", collider.time);
+    //    }
     for (auto& pose : traj) {
       printf("[l %d s %d v %d] ", pose.lane, pose.s, pose.v);
     }
@@ -169,22 +183,40 @@ vector<int> Vehicle::state_at(int t) const {
 bool Vehicle::collides_with(Pose other_pose, int at_time) {
   auto self_pose = GetPose(at_time);
   return (self_pose.lane == other_pose.lane) &&
-         (abs(self_pose.s - self_pose.s) <= L);
+         (abs(self_pose.s - other_pose.s) <= L);
 }
 
-Vehicle::collider Vehicle::will_collide_with(Pose other, int timesteps) {
+bool Vehicle::collides_with(Vehicle::Pose other_pose, int at_time,
+                            int at_time_next) {
+  auto self_pose1 = GetPose(at_time);
+  auto self_pose2 = GetPose(at_time_next);
+  if (self_pose1.lane != other_pose.lane) return false;
+  // printf("[%d->%d # %d]", self_pose1.s, self_pose2.s, other_pose.s);
+  return (self_pose1.s - other_pose.s) * (self_pose2.s - other_pose.s) < 0;
+}
+
+Vehicle::collider Vehicle::will_collide_with(Vehicle::Trajectory other,
+                                             int timesteps) {
   Vehicle::collider collider_temp;
   collider_temp.collision = false;
   collider_temp.time = -1;
 
   for (int t = 0; t < timesteps + 1; t++) {
-    if (collides_with(other, t)) {
+    // printf("[ss %d os %d] ", GetPose(t).s, other[t].s);
+    if (collides_with(other[t], t)) {
+      // printf("hit @ %d ", other[t].s);
+      collider_temp.collision = true;
+      collider_temp.time = t;
+      return collider_temp;
+    } else if (collides_with(other[t], t, t + 1)) {
+      // printf("cross @ %d ", other[t].s);
       collider_temp.collision = true;
       collider_temp.time = t;
       return collider_temp;
     }
   }
 
+  // printf("\n");
   return collider_temp;
 }
 
@@ -327,10 +359,10 @@ Vehicle::Trajectory Vehicle::generate_predictions(int horizon = 9) {
 }
 
 vector<Vehicle::Trajectory> Vehicle::FilterPrediction(
-    const map<int, Vehicle::Trajectory>& predictions) {
+    const map<int, Vehicle::Trajectory>& predictions, const int lane) {
   vector<Vehicle::Trajectory> vehs;
   for (auto& pred : predictions) {
-    if (this->lane == pred.second[0].lane && pred.first != -1) {
+    if (lane == pred.second[0].lane && pred.first != -1) {
       vehs.push_back(pred.second);
     }
   }

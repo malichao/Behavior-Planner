@@ -78,7 +78,9 @@ class Vehicle {
 
   bool collides_with(Pose other_pose, int at_time);
 
-  collider will_collide_with(Pose other, int timesteps);
+  bool collides_with(Pose other_pose, int at_time, int at_time_next);
+
+  collider will_collide_with(Trajectory other, int timesteps);
 
   void realize_state(map<int, Trajectory> predictions);
 
@@ -95,7 +97,8 @@ class Vehicle {
 
   Trajectory generate_predictions(int horizon);
 
-  vector<Trajectory> FilterPrediction(const map<int, Trajectory> &predictions);
+  vector<Trajectory> FilterPrediction(const map<int, Trajectory> &predictions,
+                                      const int lane);
 
   Trajectory GenerateTrajectory(map<int, Trajectory> predictions, string state,
                                 Pose pose, int horizon = 9) const;
