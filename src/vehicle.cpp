@@ -4,6 +4,7 @@
 #include <math.h>
 #include <map>
 #include <string>
+#include <cassert>
 #include <iterator>
 
 /**
@@ -70,38 +71,42 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
   // this->state = "KL";  // this is an example of how you change state.
   static double CostMax = 100;
   vector<string> possible_states{"KL"};
-  if (this->lane != 0) {
+  if (this->lane != 3) {
     possible_states.push_back("PLCL");
     possible_states.push_back("LCL");
   }
-  if (this->lane != 3) {
+  if (this->lane != 0) {
     possible_states.push_back("PLCR");
     possible_states.push_back("LCR");
   }
   vector<double> cost(possible_states.size(), CostMax);
   int i = 0;
   for (string state : possible_states) {
+    printf("Checking %s ", state.c_str());
     auto pose = GetPose();
-    if (state == "LCL") {
-      pose.lane -= 1;
-      state = "KL";
-    }
-    if (state == "LCR") {
+    if (state == "LCL" && this->lane != 3) {
       pose.lane += 1;
       state = "KL";
     }
+    if (state == "LCR" && this->lane != 0) {
+      pose.lane -= 1;
+      state = "KL";
+    }
     auto traj = GenerateTrajectory(predictions, state, pose);
-    auto cars_in_lane = FilterPrediction(predictions, this->lane);
-    Vehicle::collider collider{false, 999};
+    auto cars_in_lane = FilterPrediction(predictions, pose.lane);
+    Vehicle::collider collider{false, 999, 999};
+    Vehicle veh = *this;
+    veh.lane = pose.lane;
     for (auto& car : cars_in_lane) {
       //      printf("Checking :");
       //      for (auto& pose : car) {
       //        printf("[l %d s %d] ", pose.lane, pose.s);
       //      }
       //      printf("\n");
-      auto temp = will_collide_with(car, 10);
+      auto temp = veh.will_collide_with(car, 10);
       collider.collision |= temp.collision;
       collider.time = std::min(collider.time, temp.time);
+      collider.s = std::min(collider.s, temp.s);
     }
     //    if (collider.collision) {
     //      printf("*@ %d ", collider.time);
@@ -110,11 +115,12 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
       printf("[l %d s %d v %d] ", pose.lane, pose.s, pose.v);
     }
     if (collider.collision) {
-      cost[i++] = 1.0 / collider.s;
+      cost[i] = 1.0 / collider.s;
     } else {
-      cost[i++] = 1.0 / traj.back().s;
+      cost[i] = 1.0 / traj.back().s;
     }
-    printf("\n");
+    printf("cost= %.3f\n", cost[i]);
+    i++;
   }
   double min_cost = CostMax;
   string best_state = "KL";
@@ -125,6 +131,8 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
     }
   }
   this->state = best_state;
+  assert(this->lane <= 3);
+  printf("-----------\n");
 }
 
 Vehicle::Trajectory Vehicle::GenerateTrajectory(
@@ -208,16 +216,16 @@ Vehicle::collider Vehicle::will_collide_with(Vehicle::Trajectory other,
   for (int t = 0; t < timesteps + 1; t++) {
     // printf("[ss %d os %d] ", GetPose(t).s, other[t].s);
     if (collides_with(other[t], t)) {
-      // printf("hit @ %d ", other[t].s);
       collider_temp.collision = true;
       collider_temp.time = t;
       collider_temp.s = other[t].s;
+      printf("hit @ %d ", collider_temp.s);
       return collider_temp;
     } else if (collides_with(other[t], t, t + 1)) {
-      // printf("cross @ %d ", other[t].s);
       collider_temp.collision = true;
       collider_temp.time = t;
       collider_temp.s = other[t].s;
+      printf("cross @ %d ", collider_temp.s);
       return collider_temp;
     }
   }
