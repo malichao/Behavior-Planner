@@ -62,6 +62,10 @@ class Vehicle {
   */
   virtual ~Vehicle();
 
+  const Pose GetPose() const;
+
+  void SetPose(Pose pose);
+
   void update_state(map<int, vector<vector<int> > > predictions);
 
   void configure(vector<int> road_data);
@@ -94,7 +98,7 @@ class Vehicle {
   vector<vector<int> > generate_predictions(int horizon);
 
   Trajectory GenerateTrajectory(map<int, vector<vector<int> > > predictions,
-                                int horizon = 9);
+                                string state, Pose pose, int horizon = 9) const;
 };
 
 #endif

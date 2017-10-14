@@ -20,6 +20,17 @@ Vehicle::Vehicle(int lane, int s, int v, int a) {
 
 Vehicle::~Vehicle() {}
 
+const Vehicle::Pose Vehicle::GetPose() const {
+  return {lane, s, v, a};
+}
+
+void Vehicle::SetPose(Vehicle::Pose pose) {
+  lane = pose.lane;
+  s = pose.s;
+  v = pose.v;
+  a = pose.a;
+}
+
 // TODO - Implement this method.
 void Vehicle::update_state(map<int, vector<vector<int>>> predictions) {
   /*
@@ -55,31 +66,66 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
 }
 
 */
-  state = "KL";  // this is an example of how you change state.
-
-  auto traj = GenerateTrajectory(predictions);
-  int i = 0;
-  for (auto& pose : traj) {
-    printf("%d: lane %d s %d v %d a %d\n", i++, pose.lane, pose.s, pose.v,
-           pose.a);
+  // this->state = "KL";  // this is an example of how you change state.
+  static double CostMax = 100;
+  vector<string> possible_states{"KL"};
+  if (this->lane != 0) {
+    possible_states.push_back("PLCL");
+    possible_states.push_back("LCL");
   }
+  if (this->lane != 3) {
+    possible_states.push_back("PLCR");
+    possible_states.push_back("LCR");
+  }
+  vector<double> cost(possible_states.size(), CostMax);
+  int i = 0;
+  for (string state : possible_states) {
+    auto pose = GetPose();
+    if (state == "LCL") {
+      pose.lane -= 1;
+      state = "KL";
+    }
+    if (state == "LCR") {
+      pose.lane += 1;
+      state = "KL";
+    }
+    auto traj = GenerateTrajectory(predictions, state, pose);
+
+    cout << state << " ";
+    for (auto& pose : traj) {
+      printf("[l %d s %d v %d] ", pose.lane, pose.s, pose.v);
+    }
+    cost[i++] = 1.0 / traj.back().s;
+    printf("\n");
+  }
+  double min_cost = CostMax;
+  string best_state = "KL";
+  for (int i = 0; i < possible_states.size(); i++) {
+    if (cost[i] < min_cost) {
+      min_cost = cost[i];
+      best_state = possible_states[i];
+    }
+  }
+  this->state = best_state;
 }
 
 Vehicle::Trajectory Vehicle::GenerateTrajectory(
-    map<int, vector<vector<int>>> predictions, int horizon) {
-  Vehicle vehicle_snapshot = *this;
+    map<int, vector<vector<int>>> predictions, string state, Pose pose,
+    int horizon) const {
+  Vehicle veh = *this;
+  veh.state = state;
+  veh.SetPose(pose);
   Trajectory traj;
   traj.reserve(horizon);
   for (int i = 0; i < horizon; i++) {
-    traj.push_back({lane, s, v, a});
-    // printf("%d: lane %d s %d v %d a %d\n", i, lane, s, v, a);
-    realize_state(predictions);
-    increment(1);
+    traj.push_back({veh.lane, veh.s, veh.v, veh.a});
+    veh.realize_state(predictions);
+    veh.increment(1);
     for (auto& pred : predictions) {
       pred.second.erase(pred.second.begin());
     }
   }
-  *this = vehicle_snapshot;
+
   return traj;
 }
 
