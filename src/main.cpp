@@ -10,7 +10,7 @@
 #include <highgui.h>
 #include <BehaviorPlanner/gif.h>
 
-void DrawImage(RoadStringImage& str_img, int step) {
+void DrawImage(const RoadStringImage& str_img, const Vehicle& veh, int step) {
   // OpenCV coordinate system:
   // 0 ---- x
   // |
@@ -27,7 +27,8 @@ void DrawImage(RoadStringImage& str_img, int step) {
   image.setTo(cv::Scalar(255));
 
   // Draw Headline
-  string headline = "Meters / Step: " + to_string(step);
+  string headline =
+      "Meters / Step: " + to_string(step) + " State: " + veh.state;
   cv::Point pos(0, 10);
   cv::putText(image, headline, pos,     // Coordinates
               cv::FONT_HERSHEY_DUPLEX,  // Font
@@ -117,6 +118,7 @@ int main() {
   int timestep = 0;
 
   // Create a folder to save test images
+  system("rm -rf images");
   system("mkdir images");
 
   while (road.get_ego().s <= GOAL[0]) {
@@ -127,7 +129,7 @@ int main() {
     }
     road.advance();
     auto str_img = road.display(timestep);
-    DrawImage(str_img, timestep);
+    DrawImage(str_img, road.get_ego(), timestep);
     // time.sleep(float(1.0) / FRAMES_PER_SECOND);
   }
   Vehicle ego = road.get_ego();

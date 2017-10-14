@@ -110,7 +110,8 @@ RoadStringImage Road::display(int timestep) {
     it++;
   }
   ostringstream oss;
-  oss << "+Meters ======================+ step: " << timestep << endl;
+  oss << "+Meters ==============+ step: " << timestep << " state: " << state
+      << endl;
   int i = s_min;
   for (int lj = 0; lj < road.size(); lj++) {
     if (i % 10 == 0) {
@@ -175,7 +176,8 @@ void Road::cull() {
         (v.s < (center_s - this->update_width / 2))) {
       try {
         claimed.erase({v.lane, v.s});
-      } catch (const exception& e) {
+      }
+      catch (const exception& e) {
         continue;
       }
       this->vehicles.erase(v_id);
