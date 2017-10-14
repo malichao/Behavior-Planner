@@ -20,8 +20,9 @@ Vehicle::Vehicle(int lane, int s, int v, int a) {
 
 Vehicle::~Vehicle() {}
 
-const Vehicle::Pose Vehicle::GetPose() const {
-  return {lane, s, v, a};
+const Vehicle::Pose Vehicle::GetPose(int at_time) const {
+  auto temp = state_at(at_time);
+  return {temp[0], temp[1], temp[2], temp[3]};
 }
 
 void Vehicle::SetPose(Vehicle::Pose pose) {
@@ -32,7 +33,7 @@ void Vehicle::SetPose(Vehicle::Pose pose) {
 }
 
 // TODO - Implement this method.
-void Vehicle::update_state(map<int, vector<vector<int>>> predictions) {
+void Vehicle::update_state(map<int, vector<Pose>> predictions) {
   /*
 Updates the "state" of the vehicle by assigning one of the
 following values to 'self.state':
@@ -91,7 +92,6 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
     }
     auto traj = GenerateTrajectory(predictions, state, pose);
 
-    cout << state << " ";
     for (auto& pose : traj) {
       printf("[l %d s %d v %d] ", pose.lane, pose.s, pose.v);
     }
@@ -110,17 +110,19 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
 }
 
 Vehicle::Trajectory Vehicle::GenerateTrajectory(
-    map<int, vector<vector<int>>> predictions, string state, Pose pose,
+    map<int, vector<Pose>> predictions, string state, Pose pose,
     int horizon) const {
   Vehicle veh = *this;
-  veh.state = state;
   veh.SetPose(pose);
   Trajectory traj;
   traj.reserve(horizon);
+  traj.push_back({veh.lane, veh.s, veh.v, veh.a});
   for (int i = 0; i < horizon; i++) {
-    traj.push_back({veh.lane, veh.s, veh.v, veh.a});
+    // pretend to be in new proposed state
+    veh.state = state;
     veh.realize_state(predictions);
     veh.increment(1);
+    traj.push_back({veh.lane, veh.s, veh.v, veh.a});
     for (auto& pred : predictions) {
       pred.second.erase(pred.second.begin());
     }
@@ -157,25 +159,20 @@ void Vehicle::increment(int dt = 1) {
   this->v += this->a * dt;
 }
 
-vector<int> Vehicle::state_at(int t) {
-  /*
-Predicts state of vehicle in t seconds (assuming constant acceleration)
-*/
+// Predicts state of vehicle in t seconds (assuming constant acceleration)
+vector<int> Vehicle::state_at(int t) const {
   int s = this->s + this->v * t + this->a * t * t / 2;
   int v = this->v + this->a * t;
   return {this->lane, s, v, this->a};
 }
 
-bool Vehicle::collides_with(Vehicle other, int at_time) {
-  /*
-Simple collision detection.
-*/
-  vector<int> check1 = state_at(at_time);
-  vector<int> check2 = other.state_at(at_time);
-  return (check1[0] == check2[0]) && (abs(check1[1] - check2[1]) <= L);
+bool Vehicle::collides_with(Pose other_pose, int at_time) {
+  auto self_pose = GetPose(at_time);
+  return (self_pose.lane == other_pose.lane) &&
+         (abs(self_pose.s - self_pose.s) <= L);
 }
 
-Vehicle::collider Vehicle::will_collide_with(Vehicle other, int timesteps) {
+Vehicle::collider Vehicle::will_collide_with(Pose other, int timesteps) {
   Vehicle::collider collider_temp;
   collider_temp.collision = false;
   collider_temp.time = -1;
@@ -191,7 +188,7 @@ Vehicle::collider Vehicle::will_collide_with(Vehicle other, int timesteps) {
   return collider_temp;
 }
 
-void Vehicle::realize_state(map<int, vector<vector<int>>> predictions) {
+void Vehicle::realize_state(map<int, vector<Pose>> predictions) {
   /*
 Given a state, realize it by adjusting acceleration and lane.
 Note - lane changes happen instantaneously.
@@ -214,19 +211,19 @@ Note - lane changes happen instantaneously.
 
 void Vehicle::realize_constant_speed() { a = 0; }
 
-int Vehicle::_max_accel_for_lane(map<int, vector<vector<int>>> predictions,
-                                 int lane, int s) {
+int Vehicle::_max_accel_for_lane(map<int, vector<Pose>> predictions, int lane,
+                                 int s) {
   int delta_v_til_target = target_speed - v;
   int max_acc = min(max_acceleration, delta_v_til_target);
 
-  map<int, vector<vector<int>>>::iterator it = predictions.begin();
-  vector<vector<vector<int>>> in_front;
+  map<int, vector<Pose>>::iterator it = predictions.begin();
+  vector<vector<Pose>> in_front;
   while (it != predictions.end()) {
     int v_id = it->first;
 
-    vector<vector<int>> v = it->second;
+    vector<Pose> v = it->second;
 
-    if ((v[0][0] == lane) && (v[0][1] > s)) {
+    if ((v[0].lane == lane) && (v[0].s > s)) {
       in_front.push_back(v);
     }
     it++;
@@ -234,15 +231,15 @@ int Vehicle::_max_accel_for_lane(map<int, vector<vector<int>>> predictions,
 
   if (in_front.size() > 0) {
     int min_s = 1000;
-    vector<vector<int>> leading = {};
+    vector<Pose> leading = {};
     for (int i = 0; i < in_front.size(); i++) {
-      if ((in_front[i][0][1] - s) < min_s) {
-        min_s = (in_front[i][0][1] - s);
+      if ((in_front[i][0].s - s) < min_s) {
+        min_s = (in_front[i][0].s - s);
         leading = in_front[i];
       }
     }
 
-    int next_pos = leading[1][1];
+    int next_pos = leading[1].s;
     int my_next = s + this->v;
     int separation_next = next_pos - my_next;
     int available_room = separation_next - preferred_buffer;
@@ -252,11 +249,11 @@ int Vehicle::_max_accel_for_lane(map<int, vector<vector<int>>> predictions,
   return max_acc;
 }
 
-void Vehicle::realize_keep_lane(map<int, vector<vector<int>>> predictions) {
+void Vehicle::realize_keep_lane(map<int, vector<Pose>> predictions) {
   this->a = _max_accel_for_lane(predictions, this->lane, this->s);
 }
 
-void Vehicle::realize_lane_change(map<int, vector<vector<int>>> predictions,
+void Vehicle::realize_lane_change(map<int, vector<Pose>> predictions,
                                   string direction) {
   int delta = -1;
   if (direction.compare("L") == 0) {
@@ -268,37 +265,37 @@ void Vehicle::realize_lane_change(map<int, vector<vector<int>>> predictions,
   this->a = _max_accel_for_lane(predictions, lane, s);
 }
 
-void Vehicle::realize_prep_lane_change(
-    map<int, vector<vector<int>>> predictions, string direction) {
+void Vehicle::realize_prep_lane_change(map<int, vector<Pose>> predictions,
+                                       string direction) {
   int delta = -1;
   if (direction.compare("L") == 0) {
     delta = 1;
   }
   int lane = this->lane + delta;
 
-  map<int, vector<vector<int>>>::iterator it = predictions.begin();
-  vector<vector<vector<int>>> at_behind;
+  map<int, vector<Pose>>::iterator it = predictions.begin();
+  vector<vector<Pose>> at_behind;
   while (it != predictions.end()) {
     int v_id = it->first;
-    vector<vector<int>> v = it->second;
+    vector<Pose> v = it->second;
 
-    if ((v[0][0] == lane) && (v[0][1] <= this->s)) {
+    if ((v[0].lane == lane) && (v[0].s <= this->s)) {
       at_behind.push_back(v);
     }
     it++;
   }
   if (at_behind.size() > 0) {
     int max_s = -1000;
-    vector<vector<int>> nearest_behind = {};
+    vector<Pose> nearest_behind = {};
     for (int i = 0; i < at_behind.size(); i++) {
-      if ((at_behind[i][0][1]) > max_s) {
-        max_s = at_behind[i][0][1];
+      if ((at_behind[i][0].s) > max_s) {
+        max_s = at_behind[i][0].s;
         nearest_behind = at_behind[i];
       }
     }
-    int target_vel = nearest_behind[1][1] - nearest_behind[0][1];
+    int target_vel = nearest_behind[1].s - nearest_behind[0].s;
     int delta_v = this->v - target_vel;
-    int delta_s = this->s - nearest_behind[0][1];
+    int delta_s = this->s - nearest_behind[0].s;
     if (delta_v != 0) {
       int time = -2 * delta_s / delta_v;
       int a;
@@ -321,12 +318,21 @@ void Vehicle::realize_prep_lane_change(
   }
 }
 
-vector<vector<int>> Vehicle::generate_predictions(int horizon = 9) {
-  vector<vector<int>> predictions;
+vector<Vehicle::Pose> Vehicle::generate_predictions(int horizon = 9) {
+  vector<Vehicle::Pose> predictions;
   for (int i = 0; i < horizon; i++) {
-    vector<int> check1 = state_at(i);
-    vector<int> lane_s = {check1[0], check1[1]};
-    predictions.push_back(lane_s);
+    predictions.push_back(GetPose(i));
   }
   return predictions;
+}
+
+vector<Vehicle::Pose> Vehicle::FilterPrediction(
+    const map<int, vector<Pose>>& predictions) {
+  vector<Pose> vehs;
+  for (auto& pred : predictions) {
+    if (this->lane == pred.second[0].lane && pred.first != -1) {
+      vehs.push_back({pred.second[0].lane, pred.second[0].s, 0, 0});
+    }
+  }
+  return vehs;
 }

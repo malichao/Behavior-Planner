@@ -43,12 +43,12 @@ void Road::populate_traffic() {
 }
 
 void Road::advance() {
-  map<int, vector<vector<int>>> predictions;
+  map<int, vector<Vehicle::Pose>> predictions;
 
   map<int, Vehicle>::iterator it = this->vehicles.begin();
   while (it != this->vehicles.end()) {
     int v_id = it->first;
-    vector<vector<int>> preds = it->second.generate_predictions(10);
+    vector<Vehicle::Pose> preds = it->second.generate_predictions(10);
     predictions[v_id] = preds;
     it++;
   }
