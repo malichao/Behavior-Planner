@@ -19,6 +19,15 @@ class Vehicle {
     int time;        // time collision happens
   };
 
+  struct Pose {
+    int lane;
+    int s;
+    int v;
+    int a;
+  };
+
+  typedef vector<Pose> Trajectory;
+
   int L = 1;
 
   int preferred_buffer = 6;  // impacts "keep lane" behavior.
@@ -83,6 +92,9 @@ class Vehicle {
                                 string direction);
 
   vector<vector<int> > generate_predictions(int horizon);
+
+  Trajectory GenerateTrajectory(map<int, vector<vector<int> > > predictions,
+                                int horizon = 9);
 };
 
 #endif

@@ -56,6 +56,31 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
 
 */
   state = "KL";  // this is an example of how you change state.
+
+  auto traj = GenerateTrajectory(predictions);
+  int i = 0;
+  for (auto& pose : traj) {
+    printf("%d: lane %d s %d v %d a %d\n", i++, pose.lane, pose.s, pose.v,
+           pose.a);
+  }
+}
+
+Vehicle::Trajectory Vehicle::GenerateTrajectory(
+    map<int, vector<vector<int>>> predictions, int horizon) {
+  Vehicle vehicle_snapshot = *this;
+  Trajectory traj;
+  traj.reserve(horizon);
+  for (int i = 0; i < horizon; i++) {
+    traj.push_back({lane, s, v, a});
+    // printf("%d: lane %d s %d v %d a %d\n", i, lane, s, v, a);
+    realize_state(predictions);
+    increment(1);
+    for (auto& pred : predictions) {
+      pred.second.erase(pred.second.begin());
+    }
+  }
+  *this = vehicle_snapshot;
+  return traj;
 }
 
 void Vehicle::configure(vector<int> road_data) {
@@ -250,7 +275,7 @@ void Vehicle::realize_prep_lane_change(
   }
 }
 
-vector<vector<int>> Vehicle::generate_predictions(int horizon = 10) {
+vector<vector<int>> Vehicle::generate_predictions(int horizon = 9) {
   vector<vector<int>> predictions;
   for (int i = 0; i < horizon; i++) {
     vector<int> check1 = state_at(i);

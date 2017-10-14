@@ -120,6 +120,7 @@ int main() {
   system("mkdir images");
 
   while (road.get_ego().s <= GOAL[0]) {
+    printf("Ego s %d lane %d\n", road.get_ego().s, road.get_ego().lane);
     timestep++;
     if (timestep > 35) {
       break;
