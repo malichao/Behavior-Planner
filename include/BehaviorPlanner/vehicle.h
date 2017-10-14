@@ -66,7 +66,7 @@ class Vehicle {
 
   void SetPose(Pose pose);
 
-  void update_state(map<int, vector<Pose> > predictions);
+  void update_state(map<int, Trajectory> predictions);
 
   void configure(vector<int> road_data);
 
@@ -80,26 +80,25 @@ class Vehicle {
 
   collider will_collide_with(Pose other, int timesteps);
 
-  void realize_state(map<int, vector<Pose> > predictions);
+  void realize_state(map<int, Trajectory> predictions);
 
   void realize_constant_speed();
 
-  int _max_accel_for_lane(map<int, vector<Pose> > predictions, int lane, int s);
+  int _max_accel_for_lane(map<int, Trajectory> predictions, int lane, int s);
 
-  void realize_keep_lane(map<int, vector<Pose> > predictions);
+  void realize_keep_lane(map<int, Trajectory> predictions);
 
-  void realize_lane_change(map<int, vector<Pose> > predictions,
-                           string direction);
+  void realize_lane_change(map<int, Trajectory> predictions, string direction);
 
-  void realize_prep_lane_change(map<int, vector<Pose> > predictions,
+  void realize_prep_lane_change(map<int, Trajectory> predictions,
                                 string direction);
 
-  vector<Pose> generate_predictions(int horizon);
+  Trajectory generate_predictions(int horizon);
 
-  vector<Pose> FilterPrediction(const map<int, vector<Pose> > &predictions);
+  vector<Trajectory> FilterPrediction(const map<int, Trajectory> &predictions);
 
-  Trajectory GenerateTrajectory(map<int, vector<Pose> > predictions,
-                                string state, Pose pose, int horizon = 9) const;
+  Trajectory GenerateTrajectory(map<int, Trajectory> predictions, string state,
+                                Pose pose, int horizon = 9) const;
 };
 
 #endif

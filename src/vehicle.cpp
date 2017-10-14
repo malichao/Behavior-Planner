@@ -33,7 +33,7 @@ void Vehicle::SetPose(Vehicle::Pose pose) {
 }
 
 // TODO - Implement this method.
-void Vehicle::update_state(map<int, vector<Pose>> predictions) {
+void Vehicle::update_state(map<int, Vehicle::Trajectory> predictions) {
   /*
 Updates the "state" of the vehicle by assigning one of the
 following values to 'self.state':
@@ -110,7 +110,7 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
 }
 
 Vehicle::Trajectory Vehicle::GenerateTrajectory(
-    map<int, vector<Pose>> predictions, string state, Pose pose,
+    map<int, Vehicle::Trajectory> predictions, string state, Pose pose,
     int horizon) const {
   Vehicle veh = *this;
   veh.SetPose(pose);
@@ -188,7 +188,7 @@ Vehicle::collider Vehicle::will_collide_with(Pose other, int timesteps) {
   return collider_temp;
 }
 
-void Vehicle::realize_state(map<int, vector<Pose>> predictions) {
+void Vehicle::realize_state(map<int, Vehicle::Trajectory> predictions) {
   /*
 Given a state, realize it by adjusting acceleration and lane.
 Note - lane changes happen instantaneously.
@@ -211,17 +211,17 @@ Note - lane changes happen instantaneously.
 
 void Vehicle::realize_constant_speed() { a = 0; }
 
-int Vehicle::_max_accel_for_lane(map<int, vector<Pose>> predictions, int lane,
-                                 int s) {
+int Vehicle::_max_accel_for_lane(map<int, Vehicle::Trajectory> predictions,
+                                 int lane, int s) {
   int delta_v_til_target = target_speed - v;
   int max_acc = min(max_acceleration, delta_v_til_target);
 
-  map<int, vector<Pose>>::iterator it = predictions.begin();
-  vector<vector<Pose>> in_front;
+  map<int, Vehicle::Trajectory>::iterator it = predictions.begin();
+  vector<Vehicle::Trajectory> in_front;
   while (it != predictions.end()) {
     int v_id = it->first;
 
-    vector<Pose> v = it->second;
+    Vehicle::Trajectory v = it->second;
 
     if ((v[0].lane == lane) && (v[0].s > s)) {
       in_front.push_back(v);
@@ -231,7 +231,7 @@ int Vehicle::_max_accel_for_lane(map<int, vector<Pose>> predictions, int lane,
 
   if (in_front.size() > 0) {
     int min_s = 1000;
-    vector<Pose> leading = {};
+    Vehicle::Trajectory leading = {};
     for (int i = 0; i < in_front.size(); i++) {
       if ((in_front[i][0].s - s) < min_s) {
         min_s = (in_front[i][0].s - s);
@@ -249,11 +249,11 @@ int Vehicle::_max_accel_for_lane(map<int, vector<Pose>> predictions, int lane,
   return max_acc;
 }
 
-void Vehicle::realize_keep_lane(map<int, vector<Pose>> predictions) {
+void Vehicle::realize_keep_lane(map<int, Vehicle::Trajectory> predictions) {
   this->a = _max_accel_for_lane(predictions, this->lane, this->s);
 }
 
-void Vehicle::realize_lane_change(map<int, vector<Pose>> predictions,
+void Vehicle::realize_lane_change(map<int, Vehicle::Trajectory> predictions,
                                   string direction) {
   int delta = -1;
   if (direction.compare("L") == 0) {
@@ -265,19 +265,19 @@ void Vehicle::realize_lane_change(map<int, vector<Pose>> predictions,
   this->a = _max_accel_for_lane(predictions, lane, s);
 }
 
-void Vehicle::realize_prep_lane_change(map<int, vector<Pose>> predictions,
-                                       string direction) {
+void Vehicle::realize_prep_lane_change(
+    map<int, Vehicle::Trajectory> predictions, string direction) {
   int delta = -1;
   if (direction.compare("L") == 0) {
     delta = 1;
   }
   int lane = this->lane + delta;
 
-  map<int, vector<Pose>>::iterator it = predictions.begin();
-  vector<vector<Pose>> at_behind;
+  map<int, Vehicle::Trajectory>::iterator it = predictions.begin();
+  vector<Vehicle::Trajectory> at_behind;
   while (it != predictions.end()) {
     int v_id = it->first;
-    vector<Pose> v = it->second;
+    Vehicle::Trajectory v = it->second;
 
     if ((v[0].lane == lane) && (v[0].s <= this->s)) {
       at_behind.push_back(v);
@@ -286,7 +286,7 @@ void Vehicle::realize_prep_lane_change(map<int, vector<Pose>> predictions,
   }
   if (at_behind.size() > 0) {
     int max_s = -1000;
-    vector<Pose> nearest_behind = {};
+    Vehicle::Trajectory nearest_behind = {};
     for (int i = 0; i < at_behind.size(); i++) {
       if ((at_behind[i][0].s) > max_s) {
         max_s = at_behind[i][0].s;
@@ -318,20 +318,20 @@ void Vehicle::realize_prep_lane_change(map<int, vector<Pose>> predictions,
   }
 }
 
-vector<Vehicle::Pose> Vehicle::generate_predictions(int horizon = 9) {
-  vector<Vehicle::Pose> predictions;
+Vehicle::Trajectory Vehicle::generate_predictions(int horizon = 9) {
+  Vehicle::Trajectory predictions;
   for (int i = 0; i < horizon; i++) {
     predictions.push_back(GetPose(i));
   }
   return predictions;
 }
 
-vector<Vehicle::Pose> Vehicle::FilterPrediction(
-    const map<int, vector<Pose>>& predictions) {
-  vector<Pose> vehs;
+vector<Vehicle::Trajectory> Vehicle::FilterPrediction(
+    const map<int, Vehicle::Trajectory>& predictions) {
+  vector<Vehicle::Trajectory> vehs;
   for (auto& pred : predictions) {
     if (this->lane == pred.second[0].lane && pred.first != -1) {
-      vehs.push_back({pred.second[0].lane, pred.second[0].s, 0, 0});
+      vehs.push_back(pred.second);
     }
   }
   return vehs;
