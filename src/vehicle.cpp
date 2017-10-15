@@ -96,7 +96,7 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
     auto cost2 = LaneChangeCost(state, pose, predictions);
     cost[i] = cost1;
     cost[i] += cost2;
-    printf("\tcost= %.3f\n", cost[i]);
+    printf("\tcost_c %.3f cost_l %.3f cost= %.3f\n", cost1, cost2, cost[i]);
     i++;
   }
   double min_cost = CostMax;
@@ -145,9 +145,11 @@ double Vehicle::CollisionCost(
     printf("{#%d: ", car.first);
     auto temp = veh.will_collide_with(car.second, 10);
     printf("} ");
-    collider.collision |= temp.collision;
-    collider.time = std::min(collider.time, temp.time);
-    collider.s = std::min(collider.s, temp.s);
+    if (temp.collision) {
+      collider.collision |= temp.collision;
+      collider.time = std::min(collider.time, temp.time);
+      collider.s = std::min(collider.s, temp.s);
+    }
   }
 
   double delta_s = 0;
@@ -222,9 +224,7 @@ bool Vehicle::collides_with(Vehicle::Pose other_pose, int at_time,
 
 Vehicle::collider Vehicle::will_collide_with(Vehicle::Trajectory other,
                                              int timesteps) {
-  Vehicle::collider collider_temp;
-  collider_temp.collision = false;
-  collider_temp.time = -1;
+  Vehicle::collider collider_temp{false, -999, -999};
 
   for (int t = 0; t < timesteps + 1; t++) {
     if (collides_with(other[t], t)) {

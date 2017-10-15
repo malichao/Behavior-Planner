@@ -126,6 +126,8 @@ int main(int argc, char** argv) {
   system("rm -rf images");
   system("mkdir images");
 
+  auto str_img = road.display(0);
+  DrawImage(str_img, road.get_ego(), 0);
   while (road.get_ego().s <= GOAL[0]) {
     printf("Ego s %d lane %d\n", road.get_ego().s, road.get_ego().lane);
     timestep++;
