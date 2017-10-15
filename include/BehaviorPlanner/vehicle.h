@@ -98,11 +98,14 @@ class Vehicle {
 
   Trajectory generate_predictions(int horizon);
 
-  vector<Trajectory> FilterPrediction(const map<int, Trajectory> &predictions,
-                                      const int lane);
+  vector<Trajectory> FilterPrediction(const map<int, Trajectory>& predictions,
+                                      const int lane) const;
 
   Trajectory GenerateTrajectory(map<int, Trajectory> predictions, string state,
                                 Pose pose, int horizon = 9) const;
+
+  double CollisionCost(const string& state, const Pose& pose,
+                       const map<int, Trajectory>& predictions) const;
 };
 
 #endif

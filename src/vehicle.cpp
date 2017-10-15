@@ -92,33 +92,7 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
       pose.lane -= 1;
       state = "KL";
     }
-    auto traj = GenerateTrajectory(predictions, state, pose);
-    auto cars_in_lane = FilterPrediction(predictions, pose.lane);
-    Vehicle::collider collider{false, 999, 999};
-    Vehicle veh = *this;
-    veh.lane = pose.lane;
-    for (auto& car : cars_in_lane) {
-      //      printf("Checking :");
-      //      for (auto& pose : car) {
-      //        printf("[l %d s %d] ", pose.lane, pose.s);
-      //      }
-      //      printf("\n");
-      auto temp = veh.will_collide_with(car, 10);
-      collider.collision |= temp.collision;
-      collider.time = std::min(collider.time, temp.time);
-      collider.s = std::min(collider.s, temp.s);
-    }
-    //    if (collider.collision) {
-    //      printf("*@ %d ", collider.time);
-    //    }
-    for (auto& pose : traj) {
-      printf("[l %d s %d v %d] ", pose.lane, pose.s, pose.v);
-    }
-    if (collider.collision) {
-      cost[i] = 1.0 / collider.s;
-    } else {
-      cost[i] = 1.0 / traj.back().s;
-    }
+    cost[i] = CollisionCost(state, pose, predictions);
     printf("cost= %.3f\n", cost[i]);
     i++;
   }
@@ -155,6 +129,33 @@ Vehicle::Trajectory Vehicle::GenerateTrajectory(
   }
 
   return traj;
+}
+
+double Vehicle::CollisionCost(
+    const string& state, const Vehicle::Pose& pose,
+    const map<int, Vehicle::Trajectory>& predictions) const {
+  auto traj = GenerateTrajectory(predictions, state, pose);
+  auto cars_in_lane = FilterPrediction(predictions, pose.lane);
+  Vehicle::collider collider{false, 999, 999};
+  Vehicle veh = *this;
+  veh.lane = pose.lane;
+  for (auto& car : cars_in_lane) {
+    auto temp = veh.will_collide_with(car, 10);
+    collider.collision |= temp.collision;
+    collider.time = std::min(collider.time, temp.time);
+    collider.s = std::min(collider.s, temp.s);
+  }
+
+  double delta_s = 0;
+  if (collider.collision) {
+    delta_s = collider.s - pose.s;
+  } else {
+    delta_s = traj.back().s - pose.s;
+  }
+  // TODO: Replace hardcoded value with parameters
+  double max_s = 10.0 * 10.0;
+  delta_s = std::min(delta_s, max_s);
+  return (max_s - delta_s) / max_s;
 }
 
 void Vehicle::configure(vector<int> road_data) {
@@ -373,7 +374,7 @@ Vehicle::Trajectory Vehicle::generate_predictions(int horizon = 9) {
 }
 
 vector<Vehicle::Trajectory> Vehicle::FilterPrediction(
-    const map<int, Vehicle::Trajectory>& predictions, const int lane) {
+    const map<int, Vehicle::Trajectory>& predictions, const int lane) const {
   vector<Vehicle::Trajectory> vehs;
   for (auto& pred : predictions) {
     if (lane == pred.second[0].lane && pred.first != -1) {
