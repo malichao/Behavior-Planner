@@ -10,18 +10,21 @@
 /**
  * Initializes Road
  */
-Road::Road(int speed_limit, double traffic_density, vector<int> lane_speeds) {
+Road::Road(int speed_limit, double traffic_density, vector<int> lane_speeds,
+           int seed) {
   this->num_lanes = lane_speeds.size();
   this->lane_speeds = lane_speeds;
   this->speed_limit = speed_limit;
   this->density = traffic_density;
   this->camera_center = this->update_width / 2;
 
+  srand(seed);
+
   ego_rep["CS"] = " -_- ";
   ego_rep["KL"] = " O_O ";
   ego_rep["PLCR"] = " >_> ";
   ego_rep["PLCL"] = " <_< ";
-  ego_rep["LCR"] = "#<_<";
+  ego_rep["LCR"] = "#<_< ";
   ego_rep["LCL"] = " >_>#";
 }
 

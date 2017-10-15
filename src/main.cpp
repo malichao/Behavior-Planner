@@ -97,8 +97,12 @@ vector<int> GOAL = {300, 0};
 int FRAMES_PER_SECOND = 4;
 int AMOUNT_OF_ROAD_VISIBLE = 40;
 
-int main() {
-  Road road = Road(SPEED_LIMIT, TRAFFIC_DENSITY, LANE_SPEEDS);
+int main(int argc, char** argv) {
+  int seed = 0;
+  if (argc == 2) {
+    seed = std::atoi(argv[1]);
+  }
+  Road road = Road(SPEED_LIMIT, TRAFFIC_DENSITY, LANE_SPEEDS, seed);
   road.SetGoal(GOAL[0], GOAL[1]);
 
   road.update_width = AMOUNT_OF_ROAD_VISIBLE;

@@ -82,7 +82,7 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
   vector<double> cost(possible_states.size(), CostMax);
   int i = 0;
   for (string state : possible_states) {
-    printf("Checking %s ", state.c_str());
+    printf("%s\t", state.c_str());
     auto pose = GetPose();
     if (state == "LCL" && this->lane != 3) {
       pose.lane += 1;
@@ -109,7 +109,6 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
   }
   this->state = best_state;
   assert(this->lane <= 3);
-  printf("-----------\n");
 }
 
 Vehicle::Trajectory Vehicle::GenerateTrajectory(
@@ -143,7 +142,9 @@ double Vehicle::CollisionCost(
   Vehicle veh = *this;
   veh.lane = pose.lane;
   for (auto& car : cars_in_lane) {
-    auto temp = veh.will_collide_with(car, 10);
+    printf("{#%d: ", car.first);
+    auto temp = veh.will_collide_with(car.second, 10);
+    printf("} ");
     collider.collision |= temp.collision;
     collider.time = std::min(collider.time, temp.time);
     collider.s = std::min(collider.s, temp.s);
@@ -226,18 +227,19 @@ Vehicle::collider Vehicle::will_collide_with(Vehicle::Trajectory other,
   collider_temp.time = -1;
 
   for (int t = 0; t < timesteps + 1; t++) {
-    // printf("[ss %d os %d] ", GetPose(t).s, other[t].s);
     if (collides_with(other[t], t)) {
       collider_temp.collision = true;
       collider_temp.time = t;
       collider_temp.s = other[t].s;
-      printf("hit @ %d ", collider_temp.s);
+      printf("[%d:%d X %d] ", GetPose(t).lane, GetPose(t).s, other[t].s);
+      printf("X@ %d ", collider_temp.s);
       return collider_temp;
     } else if (collides_with(other[t], t, t + 1)) {
       collider_temp.collision = true;
       collider_temp.time = t;
       collider_temp.s = other[t].s;
-      printf("cross @ %d ", collider_temp.s);
+      printf("[%d:%d X %d] ", GetPose(t).lane, GetPose(t).s, other[t].s);
+      printf("XX@ %d ", collider_temp.s);
       return collider_temp;
     }
   }
@@ -384,12 +386,12 @@ Vehicle::Trajectory Vehicle::generate_predictions(int horizon = 9) {
   return predictions;
 }
 
-vector<Vehicle::Trajectory> Vehicle::FilterPrediction(
+map<int, Vehicle::Trajectory> Vehicle::FilterPrediction(
     const map<int, Vehicle::Trajectory>& predictions, const int lane) const {
-  vector<Vehicle::Trajectory> vehs;
+  map<int, Vehicle::Trajectory> vehs;
   for (auto& pred : predictions) {
     if (lane == pred.second[0].lane && pred.first != -1) {
-      vehs.push_back(pred.second);
+      vehs[pred.first] = pred.second;
     }
   }
   return vehs;

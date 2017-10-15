@@ -43,9 +43,10 @@ class Road {
   int goal_s = 0;
 
   /**
-      * Constructor
-      */
-  Road(int speed_limit, double traffic_density, vector<int> lane_speeds);
+  * Constructor
+  */
+  Road(int speed_limit, double traffic_density, vector<int> lane_speeds,
+       int seed = 0);
 
   /**
   * Destructor
