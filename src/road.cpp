@@ -16,6 +16,13 @@ Road::Road(int speed_limit, double traffic_density, vector<int> lane_speeds) {
   this->speed_limit = speed_limit;
   this->density = traffic_density;
   this->camera_center = this->update_width / 2;
+
+  ego_rep["CS"] = " -_- ";
+  ego_rep["KL"] = " O_O ";
+  ego_rep["PLCR"] = " >_> ";
+  ego_rep["PLCL"] = " <_< ";
+  ego_rep["LCR"] = "#<_<";
+  ego_rep["LCL"] = " >_>#";
 }
 
 Road::~Road() {}
@@ -93,7 +100,7 @@ RoadStringImage Road::display(int timestep) {
     if (s_min <= v.s && v.s < s_max) {
       string marker = "";
       if (v_id == this->ego_key) {
-        marker = this->ego_rep;
+        marker = this->ego_rep[ego.state];
       } else {
         stringstream oss;
         stringstream buffer;
@@ -109,6 +116,11 @@ RoadStringImage Road::display(int timestep) {
     }
     it++;
   }
+
+  if (goal_s <= this->camera_center + this->update_width / 2) {
+    road[int(goal_s - s_min)][goal_lane] = "Goal ";
+  }
+
   ostringstream oss;
   oss << "+Meters ==============+ step: " << timestep << " state: " << state
       << endl;
@@ -204,4 +216,9 @@ void Road::cull() {
     }
     it++;
   }
+}
+
+void Road::SetGoal(const int s, const int lane) {
+  goal_lane = lane;
+  goal_s = s;
 }

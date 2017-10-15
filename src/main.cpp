@@ -50,7 +50,7 @@ void DrawImage(const RoadStringImage& str_img, const Vehicle& veh, int step) {
   auto& road = str_img.road;
   for (int col = 0; col < road.size(); col++) {
     for (int lane = 0; lane < road[col].size(); lane++) {
-      cv::Point pos(lane * lane_ratio + lane_ratio / 5, col * col_ratio + 16);
+      cv::Point pos(lane * lane_ratio + lane_ratio / 8, col * col_ratio + 16);
       cv::putText(image, road[col][lane], pos + offset,  // Coordinates
                   cv::FONT_HERSHEY_DUPLEX,               // Font
                   0.5,            // Scale. 2.0 = 2x bigger
@@ -99,6 +99,7 @@ int AMOUNT_OF_ROAD_VISIBLE = 40;
 
 int main() {
   Road road = Road(SPEED_LIMIT, TRAFFIC_DENSITY, LANE_SPEEDS);
+  road.SetGoal(GOAL[0], GOAL[1]);
 
   road.update_width = AMOUNT_OF_ROAD_VISIBLE;
 

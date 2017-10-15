@@ -21,7 +21,7 @@ class Road {
  public:
   int update_width = 70;
 
-  string ego_rep = " *** ";
+  map<string, string> ego_rep;
 
   int ego_key = -1;
 
@@ -38,6 +38,9 @@ class Road {
   map<int, Vehicle> vehicles;
 
   int vehicles_added = 0;
+
+  int goal_lane = 0;
+  int goal_s = 0;
 
   /**
       * Constructor
@@ -60,4 +63,6 @@ class Road {
   void add_ego(int lane_num, int s, vector<int> config_data);
 
   void cull();
+
+  void SetGoal(const int s, const int lane);
 };
