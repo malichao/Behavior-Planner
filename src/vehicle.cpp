@@ -92,8 +92,11 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
       pose.lane -= 1;
       state = "KL";
     }
-    cost[i] = CollisionCost(state, pose, predictions);
-    printf("cost= %.3f\n", cost[i]);
+    auto cost1 = CollisionCost(state, pose, predictions);
+    auto cost2 = LaneChangeCost(state, pose, predictions);
+    cost[i] = cost1;
+    cost[i] += cost2;
+    printf("\tcost= %.3f\n", cost[i]);
     i++;
   }
   double min_cost = CostMax;
@@ -156,6 +159,14 @@ double Vehicle::CollisionCost(
   double max_s = 10.0 * 10.0;
   delta_s = std::min(delta_s, max_s);
   return (max_s - delta_s) / max_s;
+}
+
+double Vehicle::LaneChangeCost(
+    const string& state, const Vehicle::Pose& pose,
+    const map<int, Vehicle::Trajectory>& predictions) const {
+  double delta_d = abs(goal_lane - pose.lane);
+  double delta_s = abs(goal_s - pose.s);
+  return 1 - exp(-delta_d / delta_s);
 }
 
 void Vehicle::configure(vector<int> road_data) {

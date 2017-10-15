@@ -106,6 +106,9 @@ class Vehicle {
 
   double CollisionCost(const string& state, const Pose& pose,
                        const map<int, Trajectory>& predictions) const;
+
+  double LaneChangeCost(const string& state, const Pose& pose,
+                        const map<int, Trajectory>& predictions) const;
 };
 
 #endif
