@@ -120,7 +120,7 @@ RoadStringImage Road::display(int timestep) {
     it++;
   }
 
-  if (goal_s <= this->camera_center + this->update_width / 2) {
+  if (goal_s < this->camera_center + this->update_width / 2) {
     road[int(goal_s - s_min)][goal_lane] = "Goal ";
   }
 
@@ -191,8 +191,7 @@ void Road::cull() {
         (v.s < (center_s - this->update_width / 2))) {
       try {
         claimed.erase({v.lane, v.s});
-      }
-      catch (const exception& e) {
+      } catch (const exception& e) {
         continue;
       }
       this->vehicles.erase(v_id);
