@@ -10,7 +10,8 @@
 #include <highgui.h>
 #include <BehaviorPlanner/gif.h>
 
-void DrawImage(const RoadStringImage& str_img, const Vehicle& veh, int step) {
+void DrawImage(const RoadStringImage& str_img, const Vehicle& ego_car,
+               int step) {
   // OpenCV coordinate system:
   // 0 ---- x
   // |
@@ -27,9 +28,10 @@ void DrawImage(const RoadStringImage& str_img, const Vehicle& veh, int step) {
   image.setTo(cv::Scalar(255));
 
   // Draw Headline
-  string headline =
-      "Meters / Step: " + to_string(step) + " State: " + veh.state;
-  cv::Point pos(0, 10);
+  string headline = "Meters / Step: " + to_string(step) + " | " +
+                    ego_car.state + " V " + to_string(ego_car.v) + " A " +
+                    to_string(ego_car.a);
+  cv::Point pos(0, 15);
   cv::putText(image, headline, pos,     // Coordinates
               cv::FONT_HERSHEY_DUPLEX,  // Font
               0.5,                      // Scale. 2.0 = 2x bigger

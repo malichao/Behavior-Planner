@@ -37,6 +37,7 @@ void Road::populate_traffic() {
   for (int l = 0; l < this->num_lanes; l++) {
     int lane_speed = this->lane_speeds[l];
     bool vehicle_just_added = false;
+    // for (int s = start_s; s < start_s + goal_s / 2; s++) {
     for (int s = start_s; s < start_s + this->update_width; s++) {
       if (vehicle_just_added) {
         vehicle_just_added = false;
