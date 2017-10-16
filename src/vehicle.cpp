@@ -159,17 +159,20 @@ double Vehicle::CollisionCost(
   } else {
     delta_s = traj.back().s - pose.s;
   }
-  // TODO: Replace hardcoded value with parameters
-  double max_s = 10.0 * 10.0;
-  delta_s = std::min(delta_s, max_s);
-  return (max_s - delta_s) / max_s;
+
+  double ratio = 10;
+  double temp = -(fabs(delta_s) / ratio);
+  temp = std::min(0.0, temp);
+  printf("\t d_s=%.1f", temp);
+  return exp(temp);
 }
 
 double Vehicle::LaneChangeCost(
     const string& state, const Vehicle::Pose& pose,
     const map<int, Vehicle::Trajectory>& predictions) const {
-  double delta_d = abs(goal_lane - pose.lane);
+  double delta_d = abs(goal_lane - pose.lane) * 6;
   double delta_s = abs(goal_s - pose.s);
+  delta_d = max(delta_d, 1e-1);
   delta_s = max(delta_s, 1e-5);
   return 1 - exp(-delta_d / delta_s);
 }
