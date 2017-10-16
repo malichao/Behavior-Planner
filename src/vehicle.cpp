@@ -170,6 +170,7 @@ double Vehicle::LaneChangeCost(
     const map<int, Vehicle::Trajectory>& predictions) const {
   double delta_d = abs(goal_lane - pose.lane);
   double delta_s = abs(goal_s - pose.s);
+  delta_s = max(delta_s, 1e-5);
   return 1 - exp(-delta_d / delta_s);
 }
 
@@ -204,9 +205,16 @@ void Vehicle::increment(int dt = 1) {
 }
 
 // Predicts state of vehicle in t seconds (assuming constant acceleration)
+// vector<int> Vehicle::state_at(int t) const {
+//  int s = this->s + this->v * t + this->a * t * t / 2;
+//  int v = this->v + this->a * t;
+//  return {this->lane, s, v, this->a};
+//}
+
+// Predicts state of vehicle in t seconds (assuming constant velocity)
 vector<int> Vehicle::state_at(int t) const {
-  int s = this->s + this->v * t + this->a * t * t / 2;
-  int v = this->v + this->a * t;
+  int s = this->s + this->v * t;
+  int v = this->v;
   return {this->lane, s, v, this->a};
 }
 
