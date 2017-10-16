@@ -1,0 +1,3 @@
+# value should be [0,1000]
+lanechange	1000
+collision	200

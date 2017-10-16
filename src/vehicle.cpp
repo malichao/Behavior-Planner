@@ -92,8 +92,9 @@ current position. Example (showing a car with id 3 moving at 2 m/s):
       pose.lane -= 1;
       state = "KL";
     }
-    auto cost1 = CollisionCost(state, pose, predictions);
-    auto cost2 = LaneChangeCost(state, pose, predictions);
+    auto cost1 = CollisionCost(state, pose, predictions) * collision_w / 1000.;
+    auto cost2 =
+        LaneChangeCost(state, pose, predictions) * lanechange_w / 1000.;
     cost[i] = cost1;
     cost[i] += cost2;
     printf("\tcost_c %.3f cost_l %.3f cost= %.3f\n", cost1, cost2, cost[i]);
@@ -182,6 +183,8 @@ parameters which will impact the ego vehicle.
   goal_s = road_data[2];
   goal_lane = road_data[3];
   max_acceleration = road_data[4];
+  collision_w = road_data[5];
+  lanechange_w = road_data[6];
 }
 
 string Vehicle::display() {

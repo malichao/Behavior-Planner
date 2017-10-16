@@ -97,6 +97,18 @@ vector<int> GOAL = {300, 0};
 int FRAMES_PER_SECOND = 4;
 int AMOUNT_OF_ROAD_VISIBLE = 40;
 
+void ReadWeights(string file_name, int& collision_w, int& lanechange_w) {
+  fstream in(file_name);
+  // The first line in the file is comment
+  in.ignore(256, '\n');
+
+  string dummy;
+  in >> dummy >> lanechange_w;
+  in >> dummy >> collision_w;
+  printf("lanchange weight %d collision weight %d\n", lanechange_w,
+         collision_w);
+}
+
 int main(int argc, char** argv) {
   int seed = 0;
   if (argc == 2) {
@@ -115,9 +127,11 @@ int main(int argc, char** argv) {
   // configuration data: speed limit, num_lanes, goal_s, goal_lane,
   // max_acceleration
 
+  int collision_w = 0, lanechange_w = 0;
+  ReadWeights("../weights.data", collision_w, lanechange_w);
   int num_lanes = LANE_SPEEDS.size();
-  vector<int> ego_config = {SPEED_LIMIT, num_lanes, goal_s, goal_lane,
-                            MAX_ACCEL};
+  vector<int> ego_config = {SPEED_LIMIT, num_lanes,   goal_s,      goal_lane,
+                            MAX_ACCEL,   collision_w, lanechange_w};
 
   road.add_ego(2, 0, ego_config);
   int timestep = 0;

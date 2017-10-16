@@ -53,6 +53,10 @@ class Vehicle {
 
   string state;
 
+  int lanechange_w = 0;
+
+  int collision_w = 0;
+
   /**
   * Constructor
   */
