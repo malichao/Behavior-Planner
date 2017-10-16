@@ -163,7 +163,7 @@ double Vehicle::CollisionCost(
   double ratio = 10;
   double temp = -(fabs(delta_s) / ratio);
   temp = std::min(0.0, temp);
-  printf("\t d_s=%.1f", temp);
+  // printf("\t d_s=%.1f", temp);
   return exp(temp);
 }
 

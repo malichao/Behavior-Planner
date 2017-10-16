@@ -8,7 +8,6 @@
 #include <opencv/cv.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <highgui.h>
-#include <BehaviorPlanner/gif.h>
 
 void DrawImage(const RoadStringImage& str_img, const Vehicle& ego_car,
                int step) {
